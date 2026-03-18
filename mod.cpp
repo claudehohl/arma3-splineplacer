@@ -1,0 +1,10 @@
+name = "SplinePlacer - Eden Spline Placer";
+picture = "";
+logo = "";
+logoOver = "";
+tooltip = "SplinePlacer";
+tooltipOwned = "SplinePlacer - Eden Spline Placer";
+overview = "Eden Editor plugin that places objects along a Catmull-Rom spline with live preview. Place SP Waypoints, synchronize a reference object to define class and spacing, and generate objects at equal intervals – supports multiple splines, terrain snapping, and curve-aligned placement.";
+author = "SplinePlacer";
+actionName = "";
+action = "";

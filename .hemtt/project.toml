@@ -1,0 +1,25 @@
+name = "SplinePlacer"
+prefix = "splineplacer"
+mainprefix = "z"
+
+[hemtt.launch.default]
+parameters = [
+    "-name=Shadow",
+    #"-exThreads=7",
+    #"-enableHT",
+    "-malloc=jemalloc_bi_x64",
+    #"-hugePages",
+    "-world=empty",
+    '"C:\Users\Claude\Documents\arma3-missions\Mods\LineBuilder\addons\main\mpmissions\SplinePlacer.VR\mission.sqm"',
+]
+
+[version]
+major = 1
+minor = 0
+patch = 0
+
+[files]
+exclude = ["*.blend"]
+
+[lints.sqf]
+"s02ic" = "suppress"
