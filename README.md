@@ -3,6 +3,8 @@
 
 Place objects — walls, fences, barriers, pipes, crash barriers — automatically along a smooth **Catmull-Rom spline**, with a live 3D preview that updates as you drag waypoints.
 
+![Feature Screenshot](media/feature_screenshot.jpg)
+
 ---
 
 ## Features
