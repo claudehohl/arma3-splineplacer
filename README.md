@@ -72,3 +72,7 @@ Place objects — walls, fences, barriers, pipes, crash barriers — automatical
 ## License
 
 Licensed under the MIT License. Credit appreciated.
+
+## Support
+
+If you enjoy SplinePlacer and want to say thanks: [Buy me a coffee](https://buymeacoffee.com/claudehohl)
