@@ -6,13 +6,8 @@
     - Triggers auto-rebuild when waypoint positions, sync, or rotation changes
 */
 
-private _palette = [
-    [0.2, 1.0, 0.2, 0.85],
-    [0.2, 0.8, 1.0, 0.85],
-    [1.0, 0.6, 0.2, 0.85],
-    [1.0, 0.2, 0.8, 0.85],
-    [1.0, 1.0, 0.2, 0.85]
-];
+// Use shared palette from SP_colorPalette (defined in fn_init), with draw-specific alpha
+private _palette = SP_colorPalette apply { [_x select 0, _x select 1, _x select 2, 0.85] };
 
 // ── Recover generated objects after Play Scenario (runs once per init cycle) ─
 if (!isNil "SP_needsRecovery" && SP_needsRecovery) then {
@@ -74,13 +69,12 @@ private _groups = createHashMap;
 } forEach (keys SP_splines);
 
 // ── Process each group ────────────────────────────────────────────────────────
-private _gi = 0;
 {
     private _prefix     = _x;
     private _waypoints  = _y;
-    private _color      = _palette select (_gi mod count _palette);
+    private _num        = parseNumber (_prefix regexReplace ["^s", ""]);
+    private _color      = _palette select ((_num - 1) mod count _palette);
     private _snapGround = (typeOf (_waypoints select 0)) == "SP_WaypointGround";
-    _gi = _gi + 1;
 
     if (count _waypoints < 2) then {
         // Only 1 waypoint – draw the lone sphere but skip spline logic

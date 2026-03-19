@@ -19,6 +19,13 @@ SP_activePrefix       = "s1";            // prefix for newly placed waypoints
 SP_splineCounter      = 1;               // next ID number to assign
 SP_needsRecovery      = true;            // fn_draw will scan for tagged objects on first frame
 SP_handledEntities    = createHashMap;   // tracks already-processed entities to prevent double-fire
+SP_colorPalette       = [
+    [0.2, 1.0, 0.2, 1.0],
+    [0.2, 0.8, 1.0, 1.0],
+    [1.0, 0.6, 0.2, 1.0],
+    [1.0, 0.2, 0.8, 1.0],
+    [1.0, 1.0, 0.2, 1.0]
+];
 
 // ─── Recover spline counter from existing waypoints (mission reload) ──────────
 {
@@ -58,11 +65,12 @@ if (!isNull _display) then {
     _bg ctrlCommit 0;
     uiNamespace setVariable ["SP_overlayBg", _bg];
 
-    // Label: "Spline: s1"
+    // Label: "Spline: sN"
+    private _initColor = SP_colorPalette select ((SP_splineCounter - 1) mod count SP_colorPalette);
     private _label = _display ctrlCreate ["RscText", -1];
     _label ctrlSetPosition [_rX - 0.65, _tY + 0.076, 0.27, 0.1];
     _label ctrlSetText format ["Spline: %1", SP_activePrefix];
-    _label ctrlSetTextColor [0.2, 1.0, 0.2, 1.0];
+    _label ctrlSetTextColor _initColor;
     _label ctrlSetFont "EtelkaNarrowMediumPro";
     _label ctrlSetFontHeight 0.05;
     _label ctrlCommit 0;
@@ -91,16 +99,7 @@ if (!isNull _display) then {
         SP_splineCounter = SP_splineCounter + 1;
         SP_activePrefix  = format ["s%1", SP_splineCounter];
 
-        // Color cycles through palette (same order as fn_draw)
-        private _palette = [
-            [0.2, 1.0, 0.2, 1.0],
-            [0.2, 0.8, 1.0, 1.0],
-            [1.0, 0.6, 0.2, 1.0],
-            [1.0, 0.2, 0.8, 1.0],
-            [1.0, 1.0, 0.2, 1.0]
-        ];
-        private _idx   = (SP_splineCounter - 1) mod count _palette;
-        private _color = _palette select _idx;
+        private _color = SP_colorPalette select ((SP_splineCounter - 1) mod count SP_colorPalette);
 
         private _lbl = uiNamespace getVariable ["SP_overlayLabel", controlNull];
         if (!isNull _lbl) then {
