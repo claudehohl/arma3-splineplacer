@@ -10,7 +10,7 @@ parameters = [
     "-malloc=jemalloc_bi_x64",
     #"-hugePages",
     "-world=empty",
-    '"C:\Users\Claude\Documents\arma3-missions\Mods\LineBuilder\addons\main\mpmissions\SplinePlacer.VR\mission.sqm"',
+    '"C:\Users\Claude\Documents\GitHub\arma3-splineplacer\addons\main\mpmissions\LineBuilder.VR\mission.sqm"',
 ]
 
 [version]
