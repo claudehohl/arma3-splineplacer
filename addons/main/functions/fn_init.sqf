@@ -20,6 +20,16 @@ SP_splineCounter      = 1;               // next ID number to assign
 SP_needsRecovery      = true;            // fn_draw will scan for tagged objects on first frame
 SP_handledEntities    = createHashMap;   // tracks already-processed entities to prevent double-fire
 
+// ─── Recover spline counter from existing waypoints (mission reload) ──────────
+{
+    private _name = (_x get3DENAttribute "name") select 0;
+    if (_name regexMatch "^s\d+_\d+$") then {
+        private _num = parseNumber (_name regexReplace ["^s", ""] regexReplace ["_\d+$", ""]);
+        if (_num > SP_splineCounter) then { SP_splineCounter = _num; };
+    };
+} forEach (allMissionObjects "SP_Waypoint");
+SP_activePrefix = format ["s%1", SP_splineCounter];
+
 // ─── Draw3D event handler ─────────────────────────────────────────────────────
 if (!isNil "SP_drawEH") then {
     removeMissionEventHandler ["Draw3D", SP_drawEH];
