@@ -13,10 +13,13 @@ parameters = [
     '"C:\Users\Claude\Documents\GitHub\arma3-splineplacer\addons\main\mpmissions\LineBuilder.VR\mission.sqm"',
 ]
 
+[hemtt.release]
+archive = false # Default: true
+
 [version]
 major = 1
 minor = 0
-patch = 1
+patch = 2
 
 [files]
 exclude = ["*.blend"]

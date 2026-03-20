@@ -48,11 +48,14 @@ SP_drawEH = addMissionEventHandler ["Draw3D", { call SP_fnc_draw; }];
 private _display = findDisplay 313;
 if (!isNull _display) then {
 
-    // Remove old controls if they exist (stored in uiNamespace to avoid serialization warnings)
+    // Remove old controls and HUD key handler if they exist
     {
         private _ctrl = uiNamespace getVariable [_x, controlNull];
         if (!isNull _ctrl) then { ctrlDelete _ctrl; };
-    } forEach ["SP_overlayBg", "SP_overlayLabel", "SP_overlayBtn"];
+    } forEach ["SP_overlayBg", "SP_overlayLabel", "SP_overlayBtn", "SP_overlayLbl"];
+    if (!isNil "SP_hudKeyEH") then {
+        _display displayRemoveEventHandler ["KeyDown", SP_hudKeyEH];
+    };
 
     // SafeZone-Anker: rechte Kante + obere Kante
     private _rX = safeZoneX + safeZoneW;
@@ -106,6 +109,22 @@ if (!isNull _display) then {
             _lbl ctrlSetText format ["Spline: %1", SP_activePrefix];
             _lbl ctrlSetTextColor _color;
         };
+    }];
+
+    // Hide/show overlay when Backspace toggles the Eden HUD
+    // Guard: only react when no text field has focus (same condition Eden uses internally)
+    SP_hudKeyEH = _display displayAddEventHandler ["KeyDown", {
+        params ["_display", "_key"];
+        if (_key != 14) exitWith { false };
+        if (ctrlType (focusedCtrl _display) == 2) exitWith { false };
+        private _bg = uiNamespace getVariable ["SP_overlayBg", controlNull];
+        if (isNull _bg) exitWith { false };
+        private _show = !(ctrlShown _bg);
+        {
+            private _ctrl = uiNamespace getVariable [_x, controlNull];
+            if (!isNull _ctrl) then { _ctrl ctrlShow _show; };
+        } forEach ["SP_overlayBg", "SP_overlayLabel", "SP_overlayBtn", "SP_overlayLbl"];
+        false
     }];
 };
 
