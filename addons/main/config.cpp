@@ -63,9 +63,9 @@ class Cfg3DEN {
     class Attributes {};
     class EventHandlers {
         class SplinePlacer {
-            onTerrainNew        = "call SP_fnc_init;";
-            onMissionNew        = "call SP_fnc_init;";
-            onMissionLoad       = "call SP_fnc_init;";
+            onTerrainNew        = "[] spawn { sleep 0.5; call SP_fnc_init; };";
+            onMissionNew        = "[] spawn { sleep 0.5; call SP_fnc_init; };";
+            onMissionLoad       = "[] spawn { sleep 0.5; call SP_fnc_init; };";
             onMissionPreviewEnd = "[] spawn { sleep 0.5; call SP_fnc_init; };";
         };
     };
