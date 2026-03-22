@@ -30,6 +30,21 @@ if (!isNil "SP_needsRecovery" && SP_needsRecovery) then {
     } forEach (allMissionObjects "" select {
         ((_x get3DENAttribute "name") select 0) regexMatch "^sp_.+_\d+$"
     });
+
+    // Sort each recovered group by numeric suffix so generatedObjects[i]
+    // matches spline position i (allMissionObjects returns arbitrary order).
+    {
+        private _objs = _y getOrDefault ["generatedObjects", []];
+        if (count _objs > 1) then {
+            private _pairs = _objs apply {
+                private _n = (_x get3DENAttribute "name") select 0;
+                private _idx = parseNumber (_n regexReplace ["^sp_.+_", ""]);
+                [_idx, _x]
+            };
+            _pairs sort true;
+            _y set ["generatedObjects", _pairs apply { _x select 1 }];
+        };
+    } forEach SP_splines;
 };
 
 // ── Collect all SP_Waypoint objects and group by prefix ──────────────────────
