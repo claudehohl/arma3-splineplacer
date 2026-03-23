@@ -53,10 +53,30 @@ private _refInit = if (!isNull _refObj) then {
 // ── Incremental update: reuse existing objects, create/delete only the delta ──
 private _oldObjects = +(_state getOrDefault ["generatedObjects", []]);
 private _oldCount   = count _oldObjects;
+private _excluded   = _state getOrDefault ["excludedIndices", createHashMap];
+private _sampleCount = count _samples;
 
-// If class changed, all old objects must be replaced
-if (_oldCount > 0 && typeOf (_oldObjects select 0) != _class) then {
-    delete3DENEntities _oldObjects;
+// If class changed, delete all real objects but keep exclusion data
+if (_oldCount > 0) then {
+    private _firstReal = objNull;
+    { if (!isNull _x) exitWith { _firstReal = _x; }; } forEach _oldObjects;
+    if (!isNull _firstReal && {typeOf _firstReal != _class}) then {
+        private _toDelete = _oldObjects select { !isNull _x };
+        delete3DENEntities _toDelete;
+        _oldObjects = [];
+        _oldCount   = 0;
+    };
+};
+
+// If sample count changed, positional meaning of indices shifted —
+// clear exclusions and rebuild from scratch
+if (_oldCount > 0 && _oldCount != _sampleCount) then {
+    _excluded = createHashMap;
+    _state set ["excludedIndices", _excluded];
+    private _toDelete = _oldObjects select { !isNull _x };
+    if (_toDelete isNotEqualTo []) then {
+        delete3DENEntities _toDelete;
+    };
     _oldObjects = [];
     _oldCount   = 0;
 };
@@ -65,6 +85,13 @@ private _newObjects = [];
 
 {
     private _i       = _forEachIndex;
+
+    // Skip excluded positions (user-deleted gaps)
+    if (_i in _excluded) then {
+        _newObjects pushBack objNull;
+        continue;
+    };
+
     private _posASL  = _x select 0;
     private _tangent = _x select 1;
     private _posATL  = ASLToATL _posASL;
@@ -88,14 +115,13 @@ private _newObjects = [];
         _bank  = _elevation * (_tangent select 0) / _hDist;
     };
 
-    // Reuse existing object if available, otherwise create a new one
-    private _entity = if (_i < _oldCount) then {
+    // Reuse existing object if available at this sparse index, otherwise create
+    private _entity = if (_i < _oldCount && {!isNull (_oldObjects select _i)}) then {
         _oldObjects select _i
     } else {
         private _e = create3DENEntity ["Object", _class, _posATL];
         if (!isNull _e) then {
-            // Tag with name so recovery scan can identify these objects after save/load.
-            // (description attribute is NOT serialized to mission.sqm for regular objects)
+            // Tag with 1-based suffix matching sample index for recovery
             private _n = _i + 1;
             private _pad = if (_n < 10) then { "00" } else { ["", "0"] select (_n < 100) };
             _e set3DENAttribute ["name", format ["sp_%1_%2%3", _prefix, _pad, _n]];
@@ -111,13 +137,17 @@ private _newObjects = [];
             _entity setDir _heading;
             _entity set3DENAttribute ["rotation", [_pitch, _bank, _heading]];
         };
-        _newObjects pushBack _entity;
     };
+    _newObjects pushBack _entity;
 } forEach _samples;
 
-// Delete any excess old objects
-if (_oldCount > count _samples) then {
-    delete3DENEntities (_oldObjects select [count _samples, _oldCount - count _samples]);
+// Delete any excess old objects beyond new sample count
+if (_oldCount > _sampleCount) then {
+    private _excess = _oldObjects select [_sampleCount, _oldCount - _sampleCount];
+    private _toDelete = _excess select { !isNull _x };
+    if (_toDelete isNotEqualTo []) then {
+        delete3DENEntities _toDelete;
+    };
 };
 
 _state set ["generatedObjects", _newObjects];

@@ -35,14 +35,29 @@ if (!isNil "SP_needsRecovery" && SP_needsRecovery) then {
     // matches spline position i (allMissionObjects returns arbitrary order).
     {
         private _objs = _y getOrDefault ["generatedObjects", []];
-        if (count _objs > 1) then {
+        if (count _objs > 0) then {
+            // Parse 1-based suffix index from each object's name
             private _pairs = _objs apply {
                 private _n = (_x get3DENAttribute "name") select 0;
                 private _idx = parseNumber (_n regexReplace ["^sp_.+_", ""]);
                 [_idx, _x]
             };
-            _pairs sort true;
-            _y set ["generatedObjects", _pairs apply { _x select 1 }];
+
+            // Build sparse array: slot = suffix-1, gaps filled with objNull
+            private _maxIdx = 0;
+            { if ((_x select 0) > _maxIdx) then { _maxIdx = _x select 0 }; } forEach _pairs;
+
+            private _sparse = [];
+            _sparse resize _maxIdx;
+            for "_i" from 0 to (_maxIdx - 1) do { _sparse set [_i, objNull]; };
+            { _sparse set [(_x select 0) - 1, _x select 1]; } forEach _pairs;
+
+            _y set ["generatedObjects", _sparse];
+
+            // Derive exclusion set from suffix gaps (user-deleted objects)
+            private _excluded = createHashMap;
+            { if (isNull _x) then { _excluded set [_forEachIndex, true]; }; } forEach _sparse;
+            _y set ["excludedIndices", _excluded];
         };
     } forEach SP_splines;
 };
@@ -75,7 +90,7 @@ private _groups = createHashMap;
     private _prefix = _x;
     if !(_prefix in keys _groups) then {
         private _state = SP_splines get _prefix;
-        private _oldObjs = _state getOrDefault ["generatedObjects", []];
+        private _oldObjs = (_state getOrDefault ["generatedObjects", []]) select { !isNull _x };
         if (_oldObjs isNotEqualTo []) then {
             delete3DENEntities _oldObjs;
         };
@@ -149,6 +164,22 @@ private _groups = createHashMap;
             { if (!(typeOf _x in SP_waypointClasses) && !isNull _x && typeOf _x != "" && typeOf _x != "EMPTY") exitWith { _distObj = _x; }; } forEach _synced;
         };
 
+        // ── Zombie detection: catch user-deleted generated objects ────────────
+        private _generatedObjects = _state getOrDefault ["generatedObjects", []];
+        private _excluded = _state getOrDefault ["excludedIndices", createHashMap];
+        private _zombieFound = false;
+        {
+            if (!isNull _x && {typeOf _x == "" || typeOf _x == "EMPTY"}) then {
+                _generatedObjects set [_forEachIndex, objNull];
+                _excluded set [_forEachIndex, true];
+                _zombieFound = true;
+            };
+        } forEach _generatedObjects;
+        if (_zombieFound) then {
+            _state set ["generatedObjects", _generatedObjects];
+            _state set ["excludedIndices", _excluded];
+        };
+
         // ── Dirty check ────────────────────────────────────────────────────────
         private _controlPoints = _waypoints apply { (getPosASL _x) vectorAdd [0,0,-5] };
         private _cachedPositions = _state getOrDefault ["cachedPositions", []];
@@ -187,6 +218,7 @@ private _groups = createHashMap;
             _state set ["cachedPreviewSamples",   _previewSamples];
             _state set ["cachedPlacementSamples", _placementSamples];
 
+            // Re-read after possible zombie cleanup above
             private _generatedObjects = _state getOrDefault ["generatedObjects", []];
 
             // Live update: move existing objects in-place if count matches
@@ -194,6 +226,7 @@ private _groups = createHashMap;
                 private _alignToDir = SP_settings get "alignToDir";
                 private _refDir = if (!isNull _currentRef) then { getDir _currentRef } else { 0 };
                 {
+                    if (isNull _x) then { continue }; // skip excluded (user-deleted) positions
                     private _sample  = _placementSamples select _forEachIndex;
                     private _posASL  = _sample select 0;
                     private _tangent = _sample select 1;
