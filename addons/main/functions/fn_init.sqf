@@ -19,6 +19,8 @@ SP_activePrefix       = "s1";            // prefix for newly placed waypoints
 SP_splineCounter      = 1;               // next ID number to assign
 SP_needsRecovery      = true;            // fn_draw will scan for tagged objects on first frame
 SP_handledEntities    = createHashMap;   // tracks already-processed entities to prevent double-fire
+SP_dirty              = true;           // when true, fn_draw runs full recompute; when false, only draws
+SP_dragEHs            = createHashMap;  // str obj → true (objects with Dragged3DEN registered)
 SP_colorPalette       = [
     [0.2, 1.0, 0.2, 1.0],
     [0.2, 0.8, 1.0, 1.0],
@@ -137,6 +139,8 @@ SP_entityAddedEH = add3DENEventHandler ["OnEditableEntityAdded", {
     if !(_entity isEqualType objNull) exitWith {};
     if !(typeOf _entity in SP_waypointClasses) exitWith {};
 
+    SP_dirty = true;
+
     // Guard against double-fire: set3DENAttribute can re-trigger OnEditableEntityAdded.
     private _key = str _entity;
     if (_key in keys SP_handledEntities) exitWith {};
@@ -196,5 +200,16 @@ SP_entityAddedEH = add3DENEventHandler ["OnEditableEntityAdded", {
         // Lift waypoint 5 m above ground so it doesn't overlap placed objects
         private _pos = getPosATL _entity;
         _entity set3DENAttribute ["position", [_pos select 0, _pos select 1, (_pos select 2) + 5]];
+
+        // Re-dirty after rename so draw phase picks up the final name
+        SP_dirty = true;
     };
+}];
+
+// ─── Mark dirty when any entity is removed ───────────────────────────────────
+if (!isNil "SP_entityRemovedEH") then {
+    remove3DENEventHandler ["OnEditableEntityRemoved", SP_entityRemovedEH];
+};
+SP_entityRemovedEH = add3DENEventHandler ["OnEditableEntityRemoved", {
+    SP_dirty = true;
 }];
