@@ -19,7 +19,7 @@ archive = false # Default: true
 [version]
 major = 1
 minor = 0
-patch = 5
+patch = 6
 
 [files]
 exclude = ["*.blend"]
