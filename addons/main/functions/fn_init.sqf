@@ -210,6 +210,7 @@ SP_entityAddedEH = add3DENEventHandler ["OnEditableEntityAdded", {
 if (!isNil "SP_entityRemovedEH") then {
     remove3DENEventHandler ["OnEditableEntityRemoved", SP_entityRemovedEH];
 };
+SP_filling = false;                   // guard: suppresses dirty during fn_fill create/delete ops
 SP_entityRemovedEH = add3DENEventHandler ["OnEditableEntityRemoved", {
-    SP_dirty = true;
+    if (!SP_filling) then { SP_dirty = true; };
 }];

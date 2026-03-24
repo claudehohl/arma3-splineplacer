@@ -96,7 +96,11 @@ if (SP_dirty) then {
             private _state = SP_splines get _prefix;
             private _oldObjs = (_state getOrDefault ["generatedObjects", []]) select { !isNull _x };
             if (_oldObjs isNotEqualTo []) then {
-                delete3DENEntities _oldObjs;
+                SP_filling = true;
+                ["SplinePlacer Cleanup"] collect3DENHistory {
+                    delete3DENEntities _oldObjs;
+                };
+                SP_filling = false;
             };
             SP_splines deleteAt _prefix;
         };
@@ -259,28 +263,30 @@ if (SP_dirty) then {
                 if (count _placementSamples == count _generatedObjects && _generatedObjects isNotEqualTo []) then {
                     private _alignToDir = SP_settings get "alignToDir";
                     private _refDir = if (!isNull _currentRef) then { getDir _currentRef } else { 0 };
-                    {
-                        if (isNull _x) then { continue }; // skip excluded (user-deleted) positions
-                        private _sample  = _placementSamples select _forEachIndex;
-                        private _posASL  = _sample select 0;
-                        private _tangent = _sample select 1;
-                        private _posATL  = ASLToATL _posASL;
-                        if (_snapGround) then { _posATL set [2, 0]; };
-                        _x set3DENAttribute ["position", _posATL];
-                        if (_alignToDir) then {
-                            private _h = (_tangent select 0) atan2 (_tangent select 1);
-                            if (_h < 0) then { _h = _h + 360; };
-                            private _pitch = 0;
-                            private _bank  = 0;
-                            if (!_snapGround) then {
-                                private _hDist = sqrt((_tangent select 0)^2 + (_tangent select 1)^2) max 0.0001;
-                                private _elevation = (_tangent select 2) atan2 _hDist;
-                                _pitch = -(_elevation * (_tangent select 1) / _hDist);
-                                _bank  = _elevation * (_tangent select 0) / _hDist;
+                    ["SplinePlacer Update"] collect3DENHistory {
+                        {
+                            if (isNull _x) then { continue }; // skip excluded (user-deleted) positions
+                            private _sample  = _placementSamples select _forEachIndex;
+                            private _posASL  = _sample select 0;
+                            private _tangent = _sample select 1;
+                            private _posATL  = ASLToATL _posASL;
+                            if (_snapGround) then { _posATL set [2, 0]; };
+                            _x set3DENAttribute ["position", _posATL];
+                            if (_alignToDir) then {
+                                private _h = (_tangent select 0) atan2 (_tangent select 1);
+                                if (_h < 0) then { _h = _h + 360; };
+                                private _pitch = 0;
+                                private _bank  = 0;
+                                if (!_snapGround) then {
+                                    private _hDist = sqrt((_tangent select 0)^2 + (_tangent select 1)^2) max 0.0001;
+                                    private _elevation = (_tangent select 2) atan2 _hDist;
+                                    _pitch = -(_elevation * (_tangent select 1) / _hDist);
+                                    _bank  = _elevation * (_tangent select 0) / _hDist;
+                                };
+                                _x set3DENAttribute ["rotation", [_pitch, _bank, (_h + _refDir + 90) % 360]];
                             };
-                            _x set3DENAttribute ["rotation", [_pitch, _bank, (_h + _refDir + 90) % 360]];
-                        };
-                    } forEach _generatedObjects;
+                        } forEach _generatedObjects;
+                    };
                 } else {
                     // Count changed or no objects yet
                     if (!isNull _currentRef || _generatedObjects isNotEqualTo []) then {
