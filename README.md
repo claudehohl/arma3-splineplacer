@@ -20,8 +20,6 @@ Place objects — walls, fences, barriers, pipes, crash barriers — automatical
 - **Auto-naming** — newly placed and duplicated waypoints are renamed automatically to `s1_01`, `s1_02`, … in the correct group
 - **Session recovery** — generated objects survive Play Scenario and are re-linked on return to editor
 
-> Players do **not** need this mod to play missions built with it.
-
 ---
 
 ## First Time Setup
